@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TripMate AI</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <div class="page-bg">
+        <div class="gradient-circle circle-1"></div>
+        <div class="gradient-circle circle-2"></div>
+        <div class="gradient-circle circle-3"></div>
+    </div>
+
+    <main class="app-container">
+
+        <section class="hero-section">
+            <div class="badge">
+                ✈️ TripMate AI — A Multi-Agent Travel Planner with LangGraph
+            </div>
+
+            <h1>
+                Plan Your Perfect Trip with AI
+            </h1>
+
+            <p>
+                Search flights, discover hotels, and generate a complete travel itinerary using a multi-agent LangGraph system.
+            </p>
+        </section>
+
+        <section class="planner-card">
+
+            <div class="card-header">
+                <div>
+                    <h2>Where do you want to go?</h2>
+                    <p>
+                        Example: Plan a complete 7 days Japan trip from Bangladesh under 2 lakhs.
+                    </p>
+                </div>
+
+                <div class="status-pill">
+                    <span class="status-dot"></span>
+                    Online
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea
+                    id="userInput"
+                    placeholder="Plan a complete 7 days Japan trip including flights, hotels and sightseeing under 2 lakhs..."
+                ></textarea>
+
+                <button id="sendBtn" onclick="sendMessage()">
+                    <span id="btnText">Generate Plan</span>
+                    <span id="btnLoader" class="loader hidden"></span>
+                </button>
+            </div>
+
+            <div class="quick-prompts">
+                <button onclick="setPrompt('Plan a complete 7 days Japan trip from Bangladesh including flights, hotels and sightseeing under 2 lakhs.')">
+                    Japan Trip
+                </button>
+
+                <button onclick="setPrompt('Plan a 5 days Dubai trip from Dhaka with flights, hotels and sightseeing.')">
+                    Dubai Trip
+                </button>
+
+                <button onclick="setPrompt('Plan a 7 days Thailand trip from Bangladesh with budget hotels and sightseeing.')">
+                    Thailand Trip
+                </button>
+
+                <button onclick="setPrompt('Give me all country flight info.')">
+                    Global Flights
+                </button>
+            </div>
+
+        </section>
+
+        <section id="resultSection" class="result-section hidden">
+
+            <div class="result-header">
+                <div>
+                    <h2>Your AI Travel Plan</h2>
+                    <p id="threadInfo">Thread ID: -</p>
+                </div>
+
+                <div class="result-actions">
+                    <button class="copy-btn" onclick="copyResult()">
+                        Copy
+                    </button>
+
+                    <button class="download-btn" onclick="downloadPDF()">
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="pdfContent" class="pdf-content">
+                <h1 class="pdf-title">AI Travel Plan</h1>
+                <div id="resultBox" class="result-box"></div>
+            </div>
+
+        </section>
+
+        <section class="storage-panel">
+            <div class="section-header">
+                <div>
+                    <h2>Saved Trips</h2>
+                    <p>Previously generated trips stored in the simulated Amazon S3 bucket.</p>
+                </div>
+            </div>
+
+            <div class="search-grid">
+                <input id="savedSearch" type="text" placeholder="Search by destination, trip ID, or date" />
+                <input id="savedDateFilter" type="date" />
+                <select id="savedDestinationFilter">
+                    <option value="">All destinations</option>
+                </select>
+                <select id="savedVersionFilter">
+                    <option value="">Any version</option>
+                    <option value="1">Version 1</option>
+                    <option value="2">Version 2</option>
+                    <option value="3">Version 3</option>
+                </select>
+                <button class="search-btn" onclick="searchSavedTrips()">Search</button>
+            </div>
+
+            <div id="savedTripsList" class="trip-list"></div>
+        </section>
+
+        <section class="analytics-panel">
+            <div class="section-header">
+                <div>
+                    <h2>Analytics Dashboard</h2>
+                    <p>Live insights from the trips, objects, and versions in your simulated S3 bucket.</p>
+                </div>
+                <button id="refreshAnalyticsBtn" class="search-btn" onclick="refreshAnalyticsDashboard()">
+                    Refresh dashboard
+                </button>
+            </div>
+            <div id="analyticsGrid" class="analytics-grid"></div>
+            <div class="analytics-charts">
+                <div class="analytics-card">
+                    <div class="analytics-card-header">
+                        <h3>Trips by destination</h3>
+                        <span class="muted">Saved trips</span>
+                    </div>
+                    <div id="destinationBreakdown" class="breakdown-list"></div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-card-header">
+                        <h3>Version adoption</h3>
+                        <span class="muted">Versions per trip</span>
+                    </div>
+                    <div id="versionBreakdown" class="breakdown-list"></div>
+                </div>
+                <div class="analytics-card recent-trips-card">
+                    <div class="analytics-card-header">
+                        <h3>Recent trips</h3>
+                        <span class="muted">Latest activity</span>
+                    </div>
+                    <div id="recentTrips" class="recent-trips-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="storage-panel">
+            <div class="section-header">
+                <div>
+                    <h2>AWS S3 Simulator</h2>
+                    <p>Bucket: trip-planner-results</p>
+                </div>
+            </div>
+            <div id="bucketConsole" class="bucket-console"></div>
+        </section>
+
+        <section class="mapping-panel">
+            <div class="section-header">
+                <div>
+                    <h2>Amazon S3 concept mapping</h2>
+                </div>
+            </div>
+            <div class="mapping-grid">
+                <div><strong>Real Amazon S3</strong><span>Bucket</span></div>
+                <div><strong>Trip Planner Simulation</strong><span>trip-planner-results</span></div>
+                <div><strong>Object</strong><span>Agent-generated trip result</span></div>
+                <div><strong>PutObject</strong><span>Save agent result</span></div>
+                <div><strong>GetObject</strong><span>Retrieve saved trip</span></div>
+                <div><strong>ListObjects</strong><span>Saved trip listing</span></div>
+                <div><strong>DeleteObject</strong><span>Delete saved result</span></div>
+                <div><strong>Object Metadata</strong><span>Trip/object metadata</span></div>
+                <div><strong>Versioning</strong><span>Trip result versions</span></div>
+                <div><strong>Storage Class</strong><span>Simulated storage class</span></div>
+                <div><strong>Lifecycle Rule</strong><span>Simulated lifecycle transition</span></div>
+            </div>
+            <p class="mapping-note">This project simulates Amazon S3 functionality within the Trip Planner application and does not connect to live AWS infrastructure.</p>
+        </section>
+
+        <section id="errorBox" class="error-box hidden"></section>
+
+    </main>
+
+    <footer>
+        Built with FastAPI, LangGraph, Groq, PostgreSQL, Tavily and AviationStack
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/static/script.js"></script>
+
+</body>
+</html>
