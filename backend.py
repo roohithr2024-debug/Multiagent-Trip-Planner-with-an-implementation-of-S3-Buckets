@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import certifi
+import logging
 from datetime import datetime
 from typing import Annotated, TypedDict
 
@@ -22,6 +23,8 @@ from langgraph.graph import END, START, StateGraph
 from s3_simulator import save_trip_result
 from tools.flight_tool import search_flights
 from tools.tavily_tool import tavily_search
+
+logger = logging.getLogger(__name__)
 
 try:
     import psycopg
@@ -214,9 +217,17 @@ graph.add_edge("final_agent", END)
 DATABASE_URL = get_database_url()
 
 if DATABASE_URL and psycopg and PostgresSaver:
-    _conn = psycopg.connect(DATABASE_URL, autocommit=True, row_factory=dict_row)
-    checkpointer = PostgresSaver(_conn)
-    checkpointer.setup()
+    try:
+        _conn = psycopg.connect(DATABASE_URL, autocommit=True, row_factory=dict_row)
+        checkpointer = PostgresSaver(_conn)
+        checkpointer.setup()
+    except psycopg.Error:
+        logger.warning(
+            "DATABASE_URL is invalid or unavailable. "
+            "Using in-memory conversation state instead. "
+            "Remove the optional secret or provide a valid PostgreSQL URL."
+        )
+        checkpointer = MemorySaver()
 else:
     checkpointer = MemorySaver()
 

@@ -84,6 +84,10 @@ DATABASE_URL = "your_postgresql_connection_string"
 ```
 
 `DATABASE_URL` is optional; without it, conversation state uses in-memory storage.
+If you do not have PostgreSQL configured, leave this secret out entirely. Do not
+enter the placeholder `your_postgresql_connection_string`; it is not a valid URL.
+If an invalid optional value is supplied, the app logs a warning and falls back
+to in-memory conversation state.
 The local S3 simulator also uses the app filesystem, so saved files are not
 durable across Streamlit Cloud restarts. Use object storage for production
 persistence.
