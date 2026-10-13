@@ -64,6 +64,22 @@ else:
     llm = DemoLLM()
 
 
+def invoke_llm(messages):
+    global llm
+    try:
+        return llm.invoke(messages)
+    except Exception as exc:
+        is_auth_error = getattr(exc, "status_code", None) == 401 or "invalid_api_key" in str(exc)
+        if not is_auth_error:
+            raise
+        logger.warning(
+            "GROQ_API_KEY was rejected. Falling back to the built-in demo response. "
+            "Replace the Streamlit secret with a valid Groq API key."
+        )
+        llm = DemoLLM()
+        return llm.invoke(messages)
+
+
 class TravelState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
     user_query: str
@@ -142,7 +158,7 @@ Places Results:
 Make the itinerary practical, budget-aware, and easy to follow.
 """
 
-    response = llm.invoke([
+    response = invoke_llm([
         SystemMessage(content="You are an expert travel planner."),
         HumanMessage(content=prompt),
     ])
@@ -189,7 +205,7 @@ Important:
 - Keep the response useful for real travel planning.
 """
 
-    response = llm.invoke([
+    response = invoke_llm([
         SystemMessage(content="You are a professional AI travel booking assistant."),
         HumanMessage(content=final_prompt),
     ])

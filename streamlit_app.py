@@ -38,6 +38,11 @@ st.set_page_config(
 
 def display_result(result: dict) -> None:
     st.success(f"Trip saved as `{result['trip_id']}` (version {result['version']}).")
+    if str(result["answer"]).startswith("Demo AI response generated"):
+        st.warning(
+            "Groq rejected the configured API key, so this is a demo response. "
+            "Update `GROQ_API_KEY` in Streamlit Secrets for AI-generated planning."
+        )
     st.markdown(result["answer"])
 
     with st.expander("Flight results"):
