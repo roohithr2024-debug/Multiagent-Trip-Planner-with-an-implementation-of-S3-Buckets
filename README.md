@@ -1,119 +1,269 @@
-✈️ TripMate AI — A Multi-Agent Travel Planner with LangGraph
-An open-source AI travel planner that turns a natural-language trip request into a practical travel plan with flight suggestions, hotel ideas, and a day-by-day itinerary. The project uses a multi-agent workflow built with LangGraph, LangChain, and FastAPI.
+# TripMate AI
 
-Why this project?
-Planning a trip usually means jumping between multiple websites, tools, and spreadsheets. This project brings that flow into one experience by combining:
+## Multi-Agent Travel Planning with Versioned S3-Style Storage
 
-a flight-search agent,
-a hotel-research agent,
-an itinerary-planning agent, and
-a final response agent,
-all coordinated through a LangGraph workflow.
+TripMate AI is an intelligent travel-planning application that transforms a
+natural-language travel request into a practical, structured trip plan. It
+combines a LangGraph multi-agent workflow with travel research tools, an
+LLM-powered planning layer, and an S3-style storage simulator for organizing
+trip results as versioned JSON objects.
 
-Features
-✈️ Flight research using AviationStack
-🏨 Hotel suggestions using Tavily search
-🧠 Multi-agent orchestration with LangGraph
-📝 Structured travel itinerary generation
-🌐 FastAPI backend with a simple web interface
-💾 Conversation state persistence using PostgreSQL
-⚡ LLM-powered responses with Groq
-Tech Stack
-Python 3.10+
-FastAPI
-Jinja2 + HTML/CSS/JavaScript frontend
-LangGraph
-LangChain
-Groq LLMs
-PostgreSQL
-Tavily API
-AviationStack API
-Project Structure
-.
-├── app.py                # FastAPI app entry point
-├── streamlit_app.py      # Streamlit Cloud entry point
-├── backend.py            # LangGraph travel workflow
-├── requirements.txt      # Python dependencies
-├── static/               # Static frontend assets
-├── templates/            # HTML templates
-└── tools/                # Flight and web search integrations
-Prerequisites
-Before running the project locally, make sure you have:
+The application is designed as a demonstration of how specialized AI agents
+can collaborate to complete a real-world planning task while preserving the
+result as an auditable, versioned data record.
 
-Python 3.10 or newer installed
-PostgreSQL running and accessible
-API keys for:
-Groq
-Tavily
-AviationStack
-Environment Variables
-Create a .env file in the project root with the following variables:
+## Key Capabilities
 
-DATABASE_URL=postgresql://user:password@localhost:5432/travel_db
-GROQ_API_KEY=your_groq_api_key
-AVIATIONSTACK_API_KEY=your_aviationstack_api_key
-TAVILY_API_KEY=your_tavily_api_key
-DEFAULT_ORIGIN_IATA=DAC
-Installation
-python -m venv .venv
-source .venv/bin/activate   # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-Running the App
-Start the FastAPI server:
+- **Flight research** using AviationStack.
+- **Hotel and travel research** using Tavily.
+- **Destination discovery** with attraction and local-experience suggestions.
+- **AI itinerary generation** based on the request, research results, and
+  budget requirements.
+- **Multi-agent orchestration** using LangGraph and LangChain.
+- **Versioned trip storage** using an S3-style local storage simulator.
+- **Trip object management** for summaries, flights, hotels, places, and
+  itineraries.
+- **Storage analytics** including object counts, version counts, storage
+  usage, destination breakdowns, and recent-trip information.
+- **FastAPI interface** with a browser-based frontend.
+- **Streamlit interface** with an interactive travel-planning and storage
+  dashboard.
+- **PostgreSQL-backed conversation checkpoints**, with an in-memory fallback
+  when PostgreSQL is not configured.
+- **Demo-mode responses** when an LLM provider is unavailable or its API key is
+  rejected.
 
-python app.py
-Then open your browser at:
+## How It Works
 
-http://127.0.0.1:8000/
+TripMate AI processes each request through a sequential LangGraph workflow:
 
-## Deploy with Streamlit Community Cloud
-
-Streamlit Community Cloud is the recommended host for the included Python app.
-
-1. Push this project to a GitHub repository. Do not commit `.env` or any API keys.
-2. In Streamlit Community Cloud, choose **New app** and select the repository.
-3. Set the main file path to `streamlit_app.py`.
-4. Add these secrets in **Advanced settings**:
-
-```toml
-GROQ_API_KEY = "your_groq_api_key"
-TAVILY_API_KEY = "your_tavily_api_key"
-AVIATIONSTACK_API_KEY = "your_aviationstack_api_key"
-DEFAULT_ORIGIN_IATA = "DAC"
-DATABASE_URL = "your_postgresql_connection_string"
+```text
+User Request
+     |
+     v
+Flight Research Agent
+     |
+     v
+Hotel Research Agent
+     |
+     v
+Destination Highlights Agent
+     |
+     v
+Itinerary Planning Agent
+     |
+     v
+Final Response Agent
+     |
+     v
+Versioned Trip Storage
 ```
 
-`DATABASE_URL` is optional; without it, conversation state uses in-memory storage.
-If you do not have PostgreSQL configured, leave this secret out entirely. Do not
-enter the placeholder `your_postgresql_connection_string`; it is not a valid URL.
-If an invalid optional value is supplied, the app logs a warning and falls back
-to in-memory conversation state.
-The local S3 simulator also uses the app filesystem, so saved files are not
-durable across Streamlit Cloud restarts. Use object storage for production
-persistence.
+Each agent contributes a focused part of the final answer. The completed
+result is then stored as a trip record with a unique trip ID and version
+number.
 
-Netlify cannot run this FastAPI/Python application directly. It can host only a
-separate static frontend or a frontend that calls a separately deployed API.
-API Endpoints
-GET /health - Health check
-POST /api/travel - Submit a travel request
+## S3-Style Storage Model
+
+The project includes a local S3 simulator that represents a bucket using the
+following structure:
+
+```text
+storage/
+└── trip-planner-results/
+    └── trip-<id>/
+        ├── metadata.json
+        ├── flight-results.json
+        ├── hotel-results.json
+        ├── places-results.json
+        ├── final-itinerary.json
+        ├── trip-summary.json
+        └── versions/
+            ├── v1/
+            │   ├── flight-results.json
+            │   ├── hotel-results.json
+            │   ├── places-results.json
+            │   ├── final-itinerary.json
+            │   └── trip-summary.json
+            └── v2/
+                └── ...
+```
+
+For every saved trip, the storage layer records:
+
+- Bucket name and trip prefix.
+- Current version and version history.
+- Storage class.
+- Object keys and file sizes.
+- Creation and modification timestamps.
+- Trip metadata and source request.
+- Bucket-wide storage analytics.
+
+The Streamlit interface exposes these records through an S3 storage dashboard,
+including object listings, version history, storage metrics, and bucket-wide
+analytics.
+
+## Technology Stack
+
+- **Language:** Python 3.10+
+- **Workflow orchestration:** LangGraph
+- **LLM framework:** LangChain
+- **LLM provider:** Groq
+- **Travel research:** Tavily
+- **Flight data:** AviationStack
+- **API framework:** FastAPI
+- **Interactive UI:** Streamlit
+- **Web frontend:** Jinja2, HTML, CSS, and JavaScript
+- **Conversation persistence:** PostgreSQL with LangGraph checkpoints
+- **Local object storage simulation:** Python filesystem-based S3 simulator
+
+## Project Structure
+
+```text
+.
+├── app.py                 # FastAPI application and REST endpoints
+├── streamlit_app.py       # Streamlit user interface and storage dashboard
+├── backend.py             # LangGraph workflow and travel agents
+├── s3_simulator.py        # Versioned S3-style storage implementation
+├── requirements.txt       # Python dependencies
+├── tools/
+│   ├── flight_tool.py     # Flight search and airport resolution
+│   └── tavily_tool.py     # Hotel and destination research
+├── templates/
+│   └── index.html         # FastAPI web interface
+├── static/
+│   ├── script.js          # Browser UI behavior
+│   └── style.css          # Browser UI styling
+├── test_s3_storage.py     # Storage behavior tests
+├── Dockerfile             # Container configuration
+├── .env.example           # Environment variable template
+└── README.md              # Project documentation
+```
+
+## Requirements
+
+Before running the application locally, install:
+
+- Python 3.10 or newer.
+- The dependencies listed in `requirements.txt`.
+- Optional PostgreSQL access for persistent conversation checkpoints.
+- API keys for Groq, Tavily, and AviationStack when live integrations are
+  required.
+
+## Configuration
+
+Create a `.env` file in the project root based on `.env.example`:
+
+```env
+DATABASE_URL=postgresql://user:password@host:5432/travel_db
+GROQ_API_KEY=your_groq_api_key
+TAVILY_API_KEY=your_tavily_api_key
+AVIATIONSTACK_API_KEY=your_aviationstack_api_key
+DEFAULT_ORIGIN_IATA=DAC
+```
+
+`DATABASE_URL` is optional. When it is not provided, the application uses
+in-memory conversation checkpoints. Do not commit `.env` files or API keys to
+source control.
+
+## Installation
+
+### Windows
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### macOS and Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Running the Application
+
+### FastAPI application
+
+```bash
+python app.py
+```
+
+Open the browser interface at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+### Streamlit application
+
+```bash
+streamlit run streamlit_app.py
+```
+
+The Streamlit interface provides trip generation, saved-trip browsing, and a
+dedicated view of the S3-style bucket contents.
+
+## REST API
+
+The FastAPI application exposes the following endpoints:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Check application health |
+| `POST` | `/api/travel` | Generate and store a travel plan |
+| `GET` | `/api/trips` | List saved trips with optional filters |
+| `GET` | `/api/trips/{trip_id}` | Retrieve a saved trip |
+| `GET` | `/api/trips/{trip_id}/download` | Download stored trip content |
+| `POST` | `/api/trips/{trip_id}/restore` | Restore a selected trip version |
+| `DELETE` | `/api/trips/{trip_id}` | Delete a saved trip |
+| `GET` | `/api/storage/analytics` | Retrieve storage analytics |
+| `GET` | `/api/storage/console` | Retrieve the bucket object listing |
+
 Example request:
 
+```bash
 curl -X POST http://127.0.0.1:8000/api/travel \
   -H "Content-Type: application/json" \
-  -d '{"message":"Plan a 3-day trip to Tokyo with a budget of $1200"}'
-How the Workflow Works
-The user submits a travel request.
-The flight agent gathers flight-related information.
-The hotel agent searches for accommodation suggestions.
-The itinerary agent creates a practical travel plan.
-The final agent formats the result into a polished response.
-Contributing
-Contributions are welcome. If you want to improve the app, add new travel features, or fix issues:
+  -d "{\"message\":\"Plan a 3-day trip to Tokyo with a budget of $1200\"}"
+```
 
-Fork the repository
-Create a feature branch
-Make your changes
-Open a pull request
-Acknowledgments
-This project is built with the help of modern LLM tooling and travel APIs, and it is intended as a practical example of combining LangGraph agents with real-world applications.
+## Testing
+
+Run the storage test suite with:
+
+```bash
+python -m unittest test_s3_storage.py
+```
+
+The tests cover trip creation, versioning, object persistence, filtering, and
+storage analytics.
+
+## Design Notes
+
+- The application keeps travel responsibilities separated across specialized
+  agents instead of placing all logic in one prompt.
+- Every generated result is stored in multiple JSON objects so individual
+  components can be inspected or downloaded independently.
+- Versioned storage makes repeated requests for the same trip auditable.
+- External API failures are represented in the generated result where
+  possible, while configuration failures are surfaced to the user.
+- The local storage simulator is intended for demonstration and development;
+  it provides an S3-like data model without requiring an AWS account.
+
+## Contributing
+
+Contributions are welcome. To contribute:
+
+1. Create a feature branch.
+2. Make a focused change.
+3. Add or update tests when behavior changes.
+4. Run the relevant test suite.
+5. Open a pull request with a clear description of the change.
+
+## License
+
+See [LICENSE](LICENSE) for the project license.
